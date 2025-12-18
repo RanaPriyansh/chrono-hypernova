@@ -1,6 +1,8 @@
 mod actors;
 mod types;
 mod utils;
+mod engine;
+mod execution;
 
 use actors::binance_ingest::BinanceIngest;
 use actors::market_discovery::MarketDiscovery;
