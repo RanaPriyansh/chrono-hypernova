@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrono-Hypernova Dashboard</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; }
+        h1 { color: #58a6ff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #161b22; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #30363d; }
+        th { background-color: #21262d; color: #8b949e; }
+        .edge-positive { color: #3fb950; font-weight: bold; }
+        .edge-negative { color: #f85149; }
+        .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; }
+        .status-green { background: #238636; color: white; }
+        .status-red { background: #da3633; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Chrono-Hypernova Dashboard</h1>
+    
+    <div style="margin-bottom: 20px;">
+        System Status: <span class="status-pill status-green">CONNECTED</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Asset</th>
+                <th>Strike</th>
+                <th>Fair Value</th>
+                <th>Best Ask</th>
+                <th>Edge %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for market in markets %}
+            <tr>
+                <td>{{ market.asset_name }}</td>
+                <td>${{ market.strike }}</td>
+                <td>{{ market.fair_value }}</td>
+                <td>{{ market.best_ask }}</td>
+                <td class="{% if market.edge > 0.0 %}edge-positive{% else %}edge-negative{% endif %}">
+                    {{ (market.edge * 100.0) | format("%.2f") }}%
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        // Auto-refresh every 2 seconds
+        setTimeout(() => location.reload(), 2000);
+    </script>
+</body>
+</html>

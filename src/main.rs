@@ -9,7 +9,8 @@ use actors::binance_ingest::BinanceIngest;
 use actors::market_discovery::MarketDiscovery;
 use actors::polymarket_book::PolymarketBook;
 use engine::pricing::PricingActor;
-use engine::dashboard::DashboardActor;
+mod web;
+use web::server::WebDashboard;
 use execution::order_manager::{OrderManager, ExecutionCommand};
 use strategy::engine::{StrategyEngine, StrategyConfig};
 use tokio::sync::{broadcast, mpsc};
@@ -56,16 +57,11 @@ async fn main() -> anyhow::Result<()> {
     )?;
 
     // Spawn Actors
-    let dashboard = DashboardActor::new(tx.clone());
+    let web_dashboard = WebDashboard::new(tx.clone());
 
-    // Spawn Actors
-    // Note: Dashboard takes over stdout, so we might want to disable the tracing_subscriber 
-    // or log to file instead. For now, we run dashboard and let it control the screen.
-    
     tokio::spawn(async move {
-        if let Err(_e) = dashboard.run().await {
-            // tracing::error!("Dashboard failed: {}", e); 
-            // Avoid tracing here if possible as it might mess up TUI
+        if let Err(e) = web_dashboard.run().await {
+             tracing::error!("Web Dashboard failed: {}", e); 
         }
     });
 
