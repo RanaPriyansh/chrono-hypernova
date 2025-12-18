@@ -27,6 +27,8 @@ ordered-float = "4.2"
 
 # Intelligence & Parsing
 regex = "1.10"
+lazy_static = "1.4"
+hex = "0.4"
 
 # TUI & Monitoring
 ratatui = "0.26"

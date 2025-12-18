@@ -35,10 +35,11 @@ async fn main() -> anyhow::Result<()> {
     
     // Strategy Engine Config
     let strategy_config = StrategyConfig {
-        min_edge: 0.02, // 2% edge
+        min_latency_edge: 0.02,
+        min_static_edge: 0.01,
         min_size_usdc: 10.0,
-        min_profit_gabagool: 0.01,
         max_position_usdc: 100.0,
+        max_account_risk: 500.0,
     };
 
     let strategy = StrategyEngine::new(
@@ -47,9 +48,10 @@ async fn main() -> anyhow::Result<()> {
         strategy_config
     );
 
-    // Using a dummy PK for now
+    // Using a dummy PK and API Key for now
     let order_manager = OrderManager::new(
         "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", 
+        "DUMMY_API_KEY",
         cmd_rx, 
         tx.clone()
     )?;

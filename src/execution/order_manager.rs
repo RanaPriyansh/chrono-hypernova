@@ -13,8 +13,11 @@ pub enum ExecutionCommand {
     CancelOrder(String),
 }
 
+use crate::execution::client::{PolymarketClient, OrderPayload};
+
 pub struct OrderManager {
     signer: PolymarketSigner,
+    client: PolymarketClient,
     nonce: AtomicU64,
     cmd_rx: mpsc::Receiver<ExecutionCommand>,
     global_tx: broadcast::Sender<GlobalMessage>,
@@ -24,16 +27,20 @@ pub struct OrderManager {
 impl OrderManager {
     pub fn new(
         private_key: &str, 
+        api_key: &str,
         cmd_rx: mpsc::Receiver<ExecutionCommand>,
         global_tx: broadcast::Sender<GlobalMessage>
     ) -> anyhow::Result<Self> {
         let signer = PolymarketSigner::new(private_key)?;
+        let client = PolymarketClient::new("https://clob.polymarket.com".to_string(), api_key.to_string());
+        
         let quota = Quota::with_period(std::time::Duration::from_secs(10))
             .unwrap()
             .allow_burst(NonZeroU32::new(80).unwrap());
             
         Ok(Self {
             signer,
+            client,
             nonce: AtomicU64::new(0),
             cmd_rx,
             global_tx,
@@ -61,7 +68,21 @@ impl OrderManager {
                     match self.signer.sign_order(&order).await {
                         Ok(sig) => {
                             info!("Signed order with nonce {}. Signature: {:?}", current_nonce, sig);
-                            // 4. Submit to CLOB (Phase 3 completion)
+                            
+                            // 4. Submit to CLOB
+                            let payload = OrderPayload {
+                                order: order.clone(),
+                                owner: format!("{:?}", self.signer.address()), // simplified
+                                signature: format!("0x{}", hex::encode(sig.as_bytes())),
+                            };
+                            
+                            // In dry-run, we might just log this.
+                            // For Phase 4 completion, let's call the client but maybe anticipate 401/403 if key is bad.
+                            if let Err(e) = self.client.submit_batch_order(vec![payload]).await {
+                                error!("CLOB Submission Failed: {}", e);
+                            } else {
+                                info!("Order successfully submitted to CLOB!");
+                            }
                         }
                         Err(e) => error!("Failed to sign order: {}", e),
                     }

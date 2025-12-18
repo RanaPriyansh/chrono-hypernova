@@ -2752,6 +2752,8 @@ dependencies = [
  "dashmap",
  "futures-util",
  "governor",
+ "hex",
+ "lazy_static",
  "ordered-float",
  "ratatui",
  "regex",

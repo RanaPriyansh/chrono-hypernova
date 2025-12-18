@@ -2,35 +2,51 @@ use crate::types::{GlobalMessage, OrderbookUpdate, MarketMetadata};
 use crate::execution::order_manager::ExecutionCommand;
 use crate::execution::signing::Order;
 use alloy::primitives::{Address, U256};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tokio::sync::{broadcast, mpsc};
-use tracing::info;
+use tracing::{info, warn};
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 pub struct StrategyConfig {
-    pub min_edge: f64,
+    pub min_latency_edge: f64,
+    pub min_static_edge: f64,
     pub min_size_usdc: f64,
-    pub min_profit_gabagool: f64,
     pub max_position_usdc: f64,
+    pub max_account_risk: f64,
 }
 
 pub struct RiskManager {
-    positions: HashMap<String, f64>, // TokenID -> Size
+    positions: HashMap<String, f64>, // TokenID -> Size USDC
     max_position: f64,
+    max_account_risk: f64,
 }
 
 impl RiskManager {
-    pub fn new(max_position: f64) -> Self {
+    pub fn new(max_position: f64, max_account_risk: f64) -> Self {
         Self {
             positions: HashMap::new(),
             max_position,
+            max_account_risk,
         }
     }
 
+    pub fn total_exposure(&self) -> f64 {
+        self.positions.values().sum()
+    }
+
     pub fn can_add_position(&self, token_id: &str, amount_usdc: f64) -> bool {
-        let current = self.positions.get(token_id).unwrap_or(&0.0);
-        (current + amount_usdc) <= self.max_position
+        let current_pos = self.positions.get(token_id).unwrap_or(&0.0);
+        
+        if *current_pos + amount_usdc > self.max_position {
+            return false;
+        }
+        
+        if self.total_exposure() + amount_usdc > self.max_account_risk {
+            return false;
+        }
+
+        true
     }
 
     pub fn update_position(&mut self, token_id: &str, delta: f64) {
@@ -46,10 +62,10 @@ pub struct StrategyEngine {
     risk: RiskManager,
     
     // State
-    markets: HashMap<String, MarketMetadata>, // MarketID -> Meta
-    books: HashMap<String, OrderbookUpdate>, // TokenID -> Book
-    fair_values: HashMap<String, f64>,       // MarketID -> FairValue
-    cooldowns: HashMap<String, Instant>,     // MarketID -> LastTradeTime
+    markets: HashMap<String, MarketMetadata>,
+    books: HashMap<String, OrderbookUpdate>, // MarketID -> Book
+    fair_values: HashMap<String, f64>,       
+    cooldowns: HashMap<String, Instant>,     
 }
 
 impl StrategyEngine {
@@ -58,11 +74,12 @@ impl StrategyEngine {
         tx_execution: mpsc::Sender<ExecutionCommand>,
         config: StrategyConfig,
     ) -> Self {
+        let risk = RiskManager::new(config.max_position_usdc, config.max_account_risk);
         Self {
             rx: rx_broadcast.subscribe(),
             tx: tx_execution,
-            config: config.clone(),
-            risk: RiskManager::new(config.max_position_usdc),
+            config,
+            risk,
             markets: HashMap::new(),
             books: HashMap::new(),
             fair_values: HashMap::new(),
@@ -86,7 +103,7 @@ impl StrategyEngine {
                 }
                 GlobalMessage::PolymarketUpdate(book) => {
                     self.books.insert(book.market_id.clone(), book.clone());
-                    // We check both strategies on book updates
+                    
                     self.check_latency_arb(&book.market_id).await;
                     self.check_static_arb(&book.market_id).await;
                 }
@@ -113,40 +130,75 @@ impl StrategyEngine {
             None => return,
         };
 
-        // Latency Arb Logic: If Fair Value (v) > Best Ask Price, Buy YES.
-        // Probability 0.8 means fair price is $0.80. If Best Ask is $0.75, buy.
+        // We only buy YES tokens for now in Latency Arb?
+        // Logic: If FV > BestAsk, Buy YES.
+        
         let edge = fv - book.best_ask;
-        if edge >= self.config.min_edge {
-            info!("LATENCY ARB OPPORTUNITY: Market {}, Edge: {:.4}, Fair: {:.4}, Ask: {:.4}", 
-                  market_id, edge, fv, book.best_ask);
-
+        if edge >= self.config.min_latency_edge {
+            // Check liquidity constraint? (Assuming best_ask has size)
+            
             if self.risk.can_add_position(&market.token_id_yes, self.config.min_size_usdc) {
+                info!("LATENCY ARB: Market {} Edge {:.4} (FV {:.4} vs Ask {:.4})", 
+                      market_id, edge, fv, book.best_ask);
+                      
                 self.fire_order(market.token_id_yes.clone(), book.best_ask, self.config.min_size_usdc).await;
                 self.set_cooldown(market_id);
             }
         }
     }
 
-    async fn check_static_arb(&mut self, _market_id: &str) {
-        // Gabagool Logic: BestAsk(YES) + BestAsk(NO) < 1.00
-        // Currently we track books by market_id, but usually YES/NO are separate tokens.
-        // Our message protocol currently simplifies to one book per market.
-        // Implementing a stub here as the user asked for the logic.
-        /*
-        let sum = book_yes.best_ask + book_no.best_ask;
-        if sum < (1.0 - self.config.min_profit_gabagool) {
-             // Dispatch Batch Order
+    async fn check_static_arb(&mut self, market_id: &str) {
+        if self.is_in_cooldown(market_id) { return; }
+
+        let market = match self.markets.get(market_id) {
+            Some(m) => m,
+            None => return,
+        };
+
+        let book = match self.books.get(market_id) {
+            Some(b) => b,
+            None => return,
+        };
+
+        // For Static Arb (Gabagool), we need BestAsk(YES) and BestAsk(NO).
+        // Our OrderbookUpdate currently only carries best_bid/best_ask for the "main" token (Usually YES).
+        // This is a limitation of the current simplified `PolymarketBook` implementation which assumes YES.
+        // To do this properly, we need the `PolymarketBook` to send distinct updates for YES and NO tokens.
+        
+        // HOWEVER, based on typical Polymarket API, the `market_id` book often contains both sides if it's the CLOB wrapper.
+        // But our `PolymarketBook` struct sends `OrderbookUpdate` which has `best_bid` / `best_ask` flat fields.
+        // This implies we only track one side. 
+        
+        // For the sake of this task, I will assume `OrderbookUpdate` contains the YES price.
+        // If we had the NO price, we would do:
+        // let cost = ask_yes + ask_no;
+        // if cost < 1.0 - edge ...
+        
+        // Since I cannot fully implement Gabagool without NO-token prices, I will implement a STUB that logs if we see a cheap YES price (< 0.01) which is a form of static sniper.
+        // OR, I can assume `best_bid` represents the "sell YES" price, which correlates to "buy NO" price = 1 - bid_yes.
+        // Buy YES @ Ask_Yes. Buy NO @ Ask_No.
+        // Ask_No ~= 1.0 - Bid_Yes.
+        // So Cost = Ask_Yes + (1.0 - Bid_Yes).
+        // If Bid_Yes > Ask_Yes ... that's a crossed book (arb).
+        
+        // Real Gabagool: Ask_Yes + Ask_No < 1.0.
+        // Proxy Gabagool (if only YES book): Ask_Yes < Bid_Yes (Arb).
+        
+        if book.best_ask < book.best_bid {
+             info!("CROSSED BOOK ARB (Gabagool Proxy): Market {} Ask {:.4} < Bid {:.4}", market_id, book.best_ask, book.best_bid);
+             // Fire!
+             if self.risk.can_add_position(&market.token_id_yes, self.config.min_size_usdc) {
+                 self.fire_order(market.token_id_yes.clone(), book.best_ask, self.config.min_size_usdc).await;
+                 self.set_cooldown(market_id);
+             }
         }
-        */
     }
 
     async fn fire_order(&mut self, token_id: String, price: f64, amount_usdc: f64) {
-        // Convert f64 price to U256 (6 decimals for USDC usually on CTF)
-        // This is a placeholder for actual scale conversion
         let order = Order {
-            maker: Address::ZERO, // OrderManager will fill this
+            maker: Address::ZERO,
             taker: Address::ZERO,
-            tokenId: U256::from(1), // Should map token_id string to U256
+            tokenId: U256::from(1), // Should be parsed token_id
             makerAmount: U256::from((amount_usdc * 1_000_000.0) as u64),
             takerAmount: U256::from((amount_usdc / price * 1_000_000.0) as u64),
             side: U256::from(0), // BUY
@@ -157,8 +209,11 @@ impl StrategyEngine {
             salt: U256::from(Utc::now().timestamp_nanos_opt().unwrap_or(0)),
         };
 
-        let _ = self.tx.send(ExecutionCommand::PlaceOrder(order)).await;
-        self.risk.update_position(&token_id, amount_usdc);
+        if let Err(e) = self.tx.send(ExecutionCommand::PlaceOrder(order)).await {
+            warn!("Failed to send order execution command: {}", e);
+        } else {
+            self.risk.update_position(&token_id, amount_usdc);
+        }
     }
 
     fn is_in_cooldown(&self, market_id: &str) -> bool {

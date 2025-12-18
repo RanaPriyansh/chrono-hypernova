@@ -1,0 +1,8 @@
+/Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/deps/c_kzg-6acca49eff547387.d: /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/lib.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/mod.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/serde.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/./generated.rs
+
+/Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/deps/libc_kzg-6acca49eff547387.rmeta: /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/lib.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/mod.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/serde.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/./generated.rs
+
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/lib.rs:
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/mod.rs:
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/serde.rs:
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/c-kzg-1.0.3/bindings/rust/src/bindings/./generated.rs:

@@ -1,0 +1,1 @@
+alloy::alloy_primitives::FixedBytes<65>

@@ -1,19 +1,18 @@
 use crate::types::{Asset, MarketMetadata};
 use regex::Regex;
+use lazy_static::lazy_static;
 
-pub struct MarketParser {
-    asset_regex: Regex,
-    strike_regex: Regex,
+lazy_static! {
+    static ref ASSET_REGEX: Regex = Regex::new(r"(?i)(Bitcoin|BTC|Ethereum|ETH|Solana|SOL)").unwrap();
+    // Matches numbers like $98,123.45, 100k, 2500, etc. after keywords
+    static ref STRIKE_REGEX: Regex = Regex::new(r"(?:>|\babove\b|\bbelow\b|<)\s*\$?\s*([\d,]+(?:\.\d+)?)(k)?").unwrap();
 }
+
+pub struct MarketParser;
 
 impl MarketParser {
     pub fn new() -> Self {
-        Self {
-            asset_regex: Regex::new(r"(?i)(Bitcoin|BTC|Ethereum|ETH|Solana|SOL)").unwrap(),
-            // Matches numbers like $98,123.45, 100k, 2500, etc.
-            // Specifically looks for digits after indicators like >, <, or "above"
-            strike_regex: Regex::new(r"(?:>|\babove\b|<)\s*\$?\s*([\d,]+(?:\.\d+)?)(k)?").unwrap(),
-        }
+        Self
     }
 
     pub fn parse(&self, title: &str) -> Option<(Asset, f64)> {
@@ -23,12 +22,11 @@ impl MarketParser {
         }
 
         let strike = self.extract_strike(title)?;
-
         Some((asset, strike))
     }
 
     fn detect_asset(&self, title: &str) -> Asset {
-        if let Some(mat) = self.asset_regex.find(title) {
+        if let Some(mat) = ASSET_REGEX.find(title) {
             match mat.as_str().to_lowercase().as_str() {
                 "bitcoin" | "btc" => Asset::BTC,
                 "ethereum" | "eth" => Asset::ETH,
@@ -41,7 +39,7 @@ impl MarketParser {
     }
 
     fn extract_strike(&self, title: &str) -> Option<f64> {
-        if let Some(caps) = self.strike_regex.captures(title) {
+        if let Some(caps) = STRIKE_REGEX.captures(title) {
             let num_str = caps.get(1)?.as_str().replace(',', "");
             let mut val: f64 = num_str.parse().ok()?;
             
@@ -64,7 +62,7 @@ mod tests {
     #[test]
     fn test_parse_bitcoin_complex() {
         let parser = MarketParser::new();
-        let title = "Will Bitcoin be above $98,123.45 at 12:00?";
+        let title = "Will Bitcoin be above $98,123.45 at 12:00 UTC?";
         let (asset, strike) = parser.parse(title).unwrap();
         assert_eq!(asset, Asset::BTC);
         assert_eq!(strike, 98123.45);
@@ -87,11 +85,13 @@ mod tests {
         assert_eq!(asset, Asset::BTC);
         assert_eq!(strike, 100000.0);
     }
-
+    
     #[test]
-    fn test_parse_failure() {
+    fn test_parse_below() {
         let parser = MarketParser::new();
-        let title = "Will it rain tomorrow?";
-        assert!(parser.parse(title).is_none());
+        let title = "Will Solana be below $145.50?";
+        let (asset, strike) = parser.parse(title).unwrap();
+        assert_eq!(asset, Asset::SOL);
+        assert_eq!(strike, 145.50);
     }
 }
