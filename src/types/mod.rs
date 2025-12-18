@@ -24,9 +24,18 @@ pub struct OrderbookUpdate {
     pub timestamp: u64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FairValueUpdate {
+    pub market_id: String,
+    pub fair_price: f64,
+    pub confidence: f64,
+    pub timestamp: u64,
+}
+
 #[derive(Debug, Clone)]
 pub enum GlobalMessage {
     MarketsDiscovered(Vec<MarketMetadata>),
     BinancePrice(PriceUpdate),
     PolymarketUpdate(OrderbookUpdate),
+    FairValueUpdate(FairValueUpdate),
 }

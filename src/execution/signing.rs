@@ -1,8 +1,8 @@
 use alloy::{
-    dyn_abi::SolValue,
     network::EthereumWallet,
     primitives::{address, Address, FixedBytes, Keccak256, U256},
     signers::local::PrivateKeySigner,
+    signers::Signer,
     sol,
     sol_types::{Eip712Domain, SolStruct},
 };
@@ -38,7 +38,7 @@ impl PolymarketSigner {
             name: Some("Polymarket CTF Exchange".into()),
             version: Some("1".into()),
             chain_id: Some(U256::from(137)),
-            verifying_contract: Some(address!("4bFb41d5B3570DeS02C938160879669609568962")),
+            verifying_contract: Some(address!("4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E")),
             salt: None,
         };
 
