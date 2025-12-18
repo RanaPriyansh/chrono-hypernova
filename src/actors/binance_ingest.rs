@@ -15,20 +15,22 @@ impl BinanceIngest {
     }
 
     pub async fn run(self) {
-        let url = "wss://stream.binance.com:9443/ws/btcusdt@aggTrade";
+        // Subscribe to BTC, ETH, and SOL aggTrade streams
+        let url = "wss://stream.binance.com:9443/stream?streams=btcusdt@aggTrade/ethusdt@aggTrade/solusdt@aggTrade";
         
         connect_with_retry(url, |msg| async {
             if let Message::Text(text) = msg {
-                // Use simd-json in real performance path, but keeping it simple for verification
                 if let Ok(v) = serde_json::from_str::<Value>(&text) {
-                    if let (Some(p), Some(t)) = (v["p"].as_str(), v["T"].as_u64()) {
-                        let price = p.parse::<f64>().unwrap_or(0.0);
-                        let update = PriceUpdate {
-                            symbol: "BTCUSDT".to_string(),
-                            price,
-                            timestamp: t,
-                        };
-                        let _ = self.tx.send(GlobalMessage::BinancePrice(update));
+                    if let Some(data) = v.get("data") {
+                        if let (Some(s), Some(p), Some(t)) = (data["s"].as_str(), data["p"].as_str(), data["T"].as_u64()) {
+                            let price = p.parse::<f64>().unwrap_or(0.0);
+                            let update = PriceUpdate {
+                                symbol: s.to_string(), // e.g., "BTCUSDT"
+                                price,
+                                timestamp: t,
+                            };
+                            let _ = self.tx.send(GlobalMessage::BinancePrice(update));
+                        }
                     }
                 }
             }
