@@ -23,6 +23,10 @@ alloy = { version = "0.1.4", features = ["full"] }
 
 # Math & Financials
 statrs = "0.16"
+ordered-float = "4.2"
+
+# Intelligence & Parsing
+regex = "1.10"
 
 # Rate Limiting
 governor = "0.6"

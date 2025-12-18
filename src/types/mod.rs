@@ -1,9 +1,19 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub enum Asset {
+    BTC,
+    ETH,
+    SOL,
+    Unknown,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MarketMetadata {
     pub market_id: String,
     pub question: String,
+    pub asset: Asset,
+    pub strike: f64,
     pub token_id_yes: String,
     pub token_id_no: String,
     pub expiration: i64,

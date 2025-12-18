@@ -1,15 +1,18 @@
-use crate::types::{GlobalMessage, MarketMetadata};
+use crate::types::{GlobalMessage, MarketMetadata, Asset};
+use crate::engine::parser::MarketParser;
 use anyhow::Result;
 use chrono::{Timelike, Utc};
 use reqwest::Client;
 use serde_json::Value;
 use std::time::Duration;
 use tokio::sync::broadcast;
-use tracing::{info, warn};
+use tokio::time::sleep;
+use tracing::{info, warn, debug};
 
 pub struct MarketDiscovery {
     client: Client,
     tx: broadcast::Sender<GlobalMessage>,
+    parser: MarketParser,
 }
 
 impl MarketDiscovery {
@@ -17,6 +20,7 @@ impl MarketDiscovery {
         Self {
             client: Client::new(),
             tx,
+            parser: MarketParser::new(),
         }
     }
 
@@ -59,18 +63,20 @@ impl MarketDiscovery {
         let resp = self.client.get(url).send().await?.json::<Vec<Value>>().await?;
         
         let filtered: Vec<MarketMetadata> = resp.into_iter()
-            .filter(|m| {
-                let question = m["question"].as_str().unwrap_or("");
-                question.contains("15-Minute") || question.contains("price of Bitcoin") || question.contains("price of Ethereum")
-            })
             .filter_map(|m| {
-                info!("Found market: {}", m["question"]);
+                let question = m["question"].as_str()?;
+                let (asset, strike) = self.parser.parse(question)?;
+                
+                info!("Enriched market: {} (Asset: {:?}, Strike: {})", question, asset, strike);
+                
                 Some(MarketMetadata {
                     market_id: m["id"].as_str()?.to_string(),
-                    question: m["question"].as_str()?.to_string(),
+                    question: question.to_string(),
+                    asset,
+                    strike,
                     token_id_yes: m["clobTokenIds"][0].as_str()?.to_string(),
                     token_id_no: m["clobTokenIds"][1].as_str()?.to_string(),
-                    expiration: m["endDate"].as_str()?.parse().ok()?, // Expected ISO or timestamp
+                    expiration: m["endDate"].as_str()?.parse().ok()?,
                 })
             })
             .collect();
