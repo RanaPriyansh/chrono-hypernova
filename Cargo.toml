@@ -28,6 +28,10 @@ ordered-float = "4.2"
 # Intelligence & Parsing
 regex = "1.10"
 
+# TUI & Monitoring
+ratatui = "0.26"
+crossterm = "0.27"
+
 # Rate Limiting
 governor = "0.6"
 

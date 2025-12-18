@@ -3,3 +3,4 @@ pub mod pricing;
 pub mod volatility;
 pub mod parser;
 pub mod orderbook;
+pub mod dashboard;
