@@ -52,8 +52,7 @@ async fn main() -> anyhow::Result<()> {
     let order_manager = OrderManager::new(
         "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", 
         "DUMMY_API_KEY",
-        cmd_rx, 
-        tx.clone()
+        cmd_rx
     )?;
 
     // Spawn Actors
@@ -64,7 +63,7 @@ async fn main() -> anyhow::Result<()> {
     // or log to file instead. For now, we run dashboard and let it control the screen.
     
     tokio::spawn(async move {
-        if let Err(e) = dashboard.run().await {
+        if let Err(_e) = dashboard.run().await {
             // tracing::error!("Dashboard failed: {}", e); 
             // Avoid tracing here if possible as it might mess up TUI
         }

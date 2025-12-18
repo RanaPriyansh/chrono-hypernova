@@ -2,7 +2,7 @@ use crate::types::{GlobalMessage, OrderbookUpdate, MarketMetadata};
 use crate::execution::order_manager::ExecutionCommand;
 use crate::execution::signing::Order;
 use alloy::primitives::{Address, U256};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use tokio::sync::{broadcast, mpsc};
 use tracing::{info, warn};
 use std::time::{Duration, Instant};

@@ -1,4 +1,4 @@
-use crate::types::{Asset, MarketMetadata};
+use crate::types::Asset;
 use regex::Regex;
 use lazy_static::lazy_static;
 

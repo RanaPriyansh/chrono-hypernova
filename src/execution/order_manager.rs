@@ -20,7 +20,6 @@ pub struct OrderManager {
     client: PolymarketClient,
     nonce: AtomicU64,
     cmd_rx: mpsc::Receiver<ExecutionCommand>,
-    global_tx: broadcast::Sender<GlobalMessage>,
     rate_limiter: RateLimiter<governor::state::NotKeyed, governor::state::InMemoryState, governor::clock::DefaultClock>,
 }
 
@@ -28,8 +27,7 @@ impl OrderManager {
     pub fn new(
         private_key: &str, 
         api_key: &str,
-        cmd_rx: mpsc::Receiver<ExecutionCommand>,
-        global_tx: broadcast::Sender<GlobalMessage>
+        cmd_rx: mpsc::Receiver<ExecutionCommand>
     ) -> anyhow::Result<Self> {
         let signer = PolymarketSigner::new(private_key)?;
         let client = PolymarketClient::new("https://clob.polymarket.com".to_string(), api_key.to_string());
@@ -43,7 +41,6 @@ impl OrderManager {
             client,
             nonce: AtomicU64::new(0),
             cmd_rx,
-            global_tx,
             rate_limiter: RateLimiter::direct(quota),
         })
     }
@@ -73,7 +70,7 @@ impl OrderManager {
                             let payload = OrderPayload {
                                 order: order.clone(),
                                 owner: format!("{:?}", self.signer.address()), // simplified
-                                signature: format!("0x{}", hex::encode(sig.as_bytes())),
+                                signature: format!("0x{}", hex::encode(sig)),
                             };
                             
                             // In dry-run, we might just log this.

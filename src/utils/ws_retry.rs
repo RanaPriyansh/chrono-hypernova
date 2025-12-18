@@ -2,7 +2,6 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, tungsteni
 use futures_util::StreamExt;
 use std::time::Duration;
 use tokio::time::sleep;
-use url::Url;
 use tracing::{error, info, warn};
 
 pub async fn connect_with_retry<F, Fut>(url: &str, mut handler: F) 

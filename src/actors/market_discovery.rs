@@ -1,4 +1,4 @@
-use crate::types::{GlobalMessage, MarketMetadata, Asset};
+use crate::types::{GlobalMessage, MarketMetadata};
 use crate::engine::parser::MarketParser;
 use anyhow::Result;
 use chrono::{Timelike, Utc};
@@ -6,8 +6,7 @@ use reqwest::Client;
 use serde_json::Value;
 use std::time::Duration;
 use tokio::sync::broadcast;
-use tokio::time::sleep;
-use tracing::{info, warn, debug};
+use tracing::{info, warn};
 
 pub struct MarketDiscovery {
     client: Client,

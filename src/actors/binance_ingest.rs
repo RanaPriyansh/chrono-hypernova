@@ -2,7 +2,6 @@ use crate::types::{GlobalMessage, PriceUpdate};
 use crate::utils::ws_retry::connect_with_retry;
 use tokio::sync::broadcast;
 use tokio_tungstenite::tungstenite::protocol::Message;
-use tracing::{info, debug};
 use serde_json::Value;
 
 pub struct BinanceIngest {

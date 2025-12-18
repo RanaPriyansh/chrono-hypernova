@@ -1,8 +1,8 @@
-use crate::types::{GlobalMessage, FairValueUpdate, OrderbookUpdate};
+use crate::types::GlobalMessage;
 use tokio::sync::broadcast;
 use std::collections::HashMap;
 use std::time::Duration;
-use tracing::info;
+// use tracing::info;
 
 use crossterm::{
     event::{self, Event, KeyCode},
@@ -11,9 +11,9 @@ use crossterm::{
 };
 use ratatui::{
     prelude::*,
-    widgets::{Block, Borders, List, ListItem, Paragraph, Row, Table},
+    widgets::{Block, Borders, Paragraph, Row, Table},
 };
-use std::io::{self, Stdout};
+use std::io;
 
 struct DashboardState {
     fair_values: HashMap<String, f64>,

@@ -1,6 +1,5 @@
 use alloy::{
-    network::EthereumWallet,
-    primitives::{address, Address, FixedBytes, Keccak256, U256},
+    primitives::{address, Address, FixedBytes, U256},
     signers::local::PrivateKeySigner,
     signers::Signer,
     sol,

@@ -1,7 +1,7 @@
 use crate::execution::signing::Order;
 use reqwest::Client;
 use anyhow::Result;
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use tracing::info;
 
 #[derive(Serialize)]
