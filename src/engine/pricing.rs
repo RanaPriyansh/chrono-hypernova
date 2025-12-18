@@ -45,19 +45,25 @@ impl PricingActor {
                         .map(|v| v * 1.5) // Safety factor
                         .unwrap_or(self.fallback_vol);
 
-                    // Re-price relevant markets
-                    for market in self.markets.iter() {
-                        // Only price if asset matches
-                        // Mapping Binance symbol like "BTCUSDT" to Asset::BTC
-                        let asset = match update.symbol.as_str() {
-                            "BTCUSDT" => Asset::BTC,
-                            "ETHUSDT" => Asset::ETH,
-                            "SOLUSDT" => Asset::SOL,
-                            _ => Asset::Unknown,
-                        };
+                    let asset = match update.symbol.as_str() {
+                        "BTCUSDT" => Asset::BTC,
+                        "ETHUSDT" => Asset::ETH,
+                        "SOLUSDT" => Asset::SOL,
+                        _ => Asset::Unknown,
+                    };
 
+                    if asset == Asset::Unknown { continue; }
+
+                    // Re-price ONLY markets for this asset
+                    for entry in self.markets.iter() {
+                        let market = entry.value();
                         if market.asset == asset {
-                            let fair_price = self.calculate_fair_value(&market, update.price, current_vol);
+                            // Skip if already expired
+                            if Utc::now().timestamp() >= market.expiration {
+                                continue;
+                            }
+
+                            let fair_price = self.calculate_fair_value(market, update.price, current_vol);
                             
                             let _ = self.tx.send(GlobalMessage::FairValueUpdate(FairValueUpdate {
                                 market_id: market.market_id.clone(),

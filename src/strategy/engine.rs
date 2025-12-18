@@ -130,16 +130,18 @@ impl StrategyEngine {
             None => return,
         };
 
-        // We only buy YES tokens for now in Latency Arb?
-        // Logic: If FV > BestAsk, Buy YES.
-        
-        let edge = fv - book.best_ask;
+        // Inventory Skew Logic
+        // If we are LONG $100, we should be less eager to buy more.
+        // Skew = (CurrentPosition / MaxPosition) * MaxSkew
+        let current_pos = self.risk.positions.get(&market.token_id_yes).unwrap_or(&0.0);
+        let skew_factor = (*current_pos / self.config.max_position_usdc) * 0.05; // Max 5% skew
+        let adjusted_fv = fv - skew_factor;
+
+        let edge = adjusted_fv - book.best_ask;
         if edge >= self.config.min_latency_edge {
-            // Check liquidity constraint? (Assuming best_ask has size)
-            
             if self.risk.can_add_position(&market.token_id_yes, self.config.min_size_usdc) {
-                info!("LATENCY ARB: Market {} Edge {:.4} (FV {:.4} vs Ask {:.4})", 
-                      market_id, edge, fv, book.best_ask);
+                info!("LATENCY ARB (Skewed FV {:.4}): Market {} Edge {:.4}", 
+                      adjusted_fv, market_id, edge);
                       
                 self.fire_order(market.token_id_yes.clone(), book.best_ask, self.config.min_size_usdc).await;
                 self.set_cooldown(market_id);
@@ -194,11 +196,13 @@ impl StrategyEngine {
         }
     }
 
-    async fn fire_order(&mut self, token_id: String, price: f64, amount_usdc: f64) {
+    async fn fire_order(&mut self, token_id_str: String, price: f64, amount_usdc: f64) {
+        let token_id = U256::from_str_radix(&token_id_str, 10).unwrap_or(U256::from(0));
+        
         let order = Order {
             maker: Address::ZERO,
             taker: Address::ZERO,
-            tokenId: U256::from(1), // Should be parsed token_id
+            tokenId: token_id,
             makerAmount: U256::from((amount_usdc * 1_000_000.0) as u64),
             takerAmount: U256::from((amount_usdc / price * 1_000_000.0) as u64),
             side: U256::from(0), // BUY
@@ -212,7 +216,7 @@ impl StrategyEngine {
         if let Err(e) = self.tx.send(ExecutionCommand::PlaceOrder(order)).await {
             warn!("Failed to send order execution command: {}", e);
         } else {
-            self.risk.update_position(&token_id, amount_usdc);
+            self.risk.update_position(&token_id_str, amount_usdc);
         }
     }
 
