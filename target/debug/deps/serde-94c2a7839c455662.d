@@ -1,0 +1,14 @@
+/Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/deps/serde-94c2a7839c455662.d: /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/build/serde-7465ba8f24c4a600/out/private.rs
+
+/Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/deps/libserde-94c2a7839c455662.rlib: /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/build/serde-7465ba8f24c4a600/out/private.rs
+
+/Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/deps/libserde-94c2a7839c455662.rmeta: /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/build/serde-7465ba8f24c4a600/out/private.rs
+
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/priyansh/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/build/serde-7465ba8f24c4a600/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/priyansh/.gemini/antigravity/playground/chrono-hypernova/target/debug/build/serde-7465ba8f24c4a600/out
